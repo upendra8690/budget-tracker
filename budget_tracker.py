@@ -1,78 +1,126 @@
 """
-SIMPLE BUDGET TRACKER
-=====================
-A beginner-friendly program to track your spending
+SMART BUDGET TRACKER 💰
+======================
+A beginner-friendly but professional budget tracker.
 
-Concepts covered:
-✓ Variables & Data Types (int, float, string, bool)
-✓ Basic Math Operations
-✓ Print & Input Functions
-✓ If-Else Conditionals
-✓ Boolean Logic & Logical Operators (and, or, not)
-✓ For Loops & While Loops
-✓ Break & Continue
-✓ Functions with Parameters & Return Values
-✓ Code Modularity
+Features:
+✓ Add purchases (single / multiple)
+✓ Discount calculator
+✓ Transaction history
+✓ Auto-save data (JSON file)
+✓ Input validation (no crashing)
+✓ Clear summary report
 """
 
+import json
+import os
+from datetime import datetime
 
-# ========== FUNCTIONS ==========
+
+DATA_FILE = "budget_data.json"
+
+
+# ========== HELPER FUNCTIONS ==========
 
 def show_welcome():
-    """Display welcome message"""
-    print("\n💰 WELCOME TO BUDGET TRACKER 💰")
-    print("-" * 40)
+    print("\n💰 SMART BUDGET TRACKER 💰")
+    print("=" * 45)
+
+
+def load_data():
+    """Load budget data from JSON file"""
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as file:
+            return json.load(file)
+    return {"budget": 0.0, "spent": 0.0, "purchases": []}
+
+
+def save_data(data):
+    """Save budget data to JSON file"""
+    with open(DATA_FILE, "w") as file:
+        json.dump(data, file, indent=4)
+
+
+def safe_float_input(message):
+    """Safely take float input (prevents crash)"""
+    while True:
+        try:
+            value = float(input(message))
+            return value
+        except ValueError:
+            print("❌ Invalid input. Enter a number only.")
+
+
+def safe_int_input(message):
+    """Safely take integer input"""
+    while True:
+        try:
+            value = int(input(message))
+            return value
+        except ValueError:
+            print("❌ Invalid input. Enter an integer only.")
 
 
 def get_budget_status(budget, spent):
-    """
-    Calculate and show budget information
-    Parameters: budget (float), spent (float)
-    Returns: remaining budget (float)
-    """
     remaining = budget - spent
-    percentage = (spent / budget) * 100
+    percentage = (spent / budget) * 100 if budget > 0 else 0
 
-    print(f"\nBudget: ${budget:.2f}")
-    print(f"Spent: ${spent:.2f}")
-    print(f"Remaining: ${remaining:.2f} ({100 - percentage:.1f}% left)")
+    print("\n📌 CURRENT STATUS")
+    print("-" * 45)
+    print(f"Budget      : ${budget:.2f}")
+    print(f"Spent       : ${spent:.2f}")
+    print(f"Remaining   : ${remaining:.2f}")
+    print(f"Usage       : {percentage:.1f}% used")
 
-    # Conditional to give advice
     if remaining > budget * 0.5:
-        print("✓ Status: Good!")
+        print("Status      : ✅ Good (safe spending)")
     elif remaining > 0:
-        print("⚠ Status: Be careful!")
+        print("Status      : ⚠ Careful (budget is tight)")
     else:
-        print("❌ Status: Over budget!")
+        print("Status      : ❌ Over Budget!")
 
     return remaining
 
 
-def can_buy(item_price, remaining):
-    """
-    Check if item is affordable
-    Parameters: item_price (float), remaining (float)
-    Returns: True or False (bool)
-    """
-    # Using logical operator AND
-    if item_price > 0 and item_price <= remaining:
-        return True
-    else:
-        return False
+def can_buy(price, remaining):
+    return price > 0 and price <= remaining
+
+
+def add_purchase(data, name, price):
+    """Add purchase to history"""
+    data["spent"] += price
+    data["purchases"].append({
+        "name": name,
+        "price": price,
+        "time": datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    })
+
+
+def show_history(data):
+    """Display purchase history"""
+    if len(data["purchases"]) == 0:
+        print("\n📭 No purchases yet.")
+        return
+
+    print("\n🧾 PURCHASE HISTORY")
+    print("=" * 45)
+
+    for i, item in enumerate(data["purchases"], start=1):
+        print(f"{i}. {item['name']} - ${item['price']:.2f} ({item['time']})")
+
+    print("=" * 45)
+    print(f"Total purchases: {len(data['purchases'])}")
 
 
 def calculate_discount(price, discount_percent):
-    """
-    Calculate price after discount
-    Parameters: price (float), discount_percent (int)
-    Returns: discounted price (float)
-    """
     discount = price * (discount_percent / 100)
     final_price = price - discount
 
-    print(f"Original: ${price:.2f}")
-    print(f"Discount: {discount_percent}% off (${discount:.2f})")
-    print(f"Final: ${final_price:.2f}")
+    print("\n💸 DISCOUNT RESULT")
+    print("-" * 45)
+    print(f"Original Price : ${price:.2f}")
+    print(f"Discount       : {discount_percent}% (-${discount:.2f})")
+    print(f"Final Price    : ${final_price:.2f}")
 
     return final_price
 
@@ -80,174 +128,143 @@ def calculate_discount(price, discount_percent):
 # ========== MAIN PROGRAM ==========
 
 def main():
-    """Main function - runs the entire program"""
-
-    # Show welcome
     show_welcome()
 
-    # VARIABLES - Different data types
-    budget = float(input("\nEnter your weekly budget: $"))
-    total_spent = 0.0
-    purchase_count = 0
+    data = load_data()
 
-    # Boolean variable to control loop
-    keep_going = True
+    # If budget is not set, ask user
+    if data["budget"] == 0:
+        data["budget"] = safe_float_input("\nEnter your weekly budget: $")
+        save_data(data)
 
-    # WHILE LOOP - Main program loop
-    while keep_going:
+    while True:
+        remaining = get_budget_status(data["budget"], data["spent"])
 
-        # Show current status
-        remaining = get_budget_status(budget, total_spent)
-
-        print("\n" + "=" * 40)
-        print("MENU:")
+        print("\n" + "=" * 45)
+        print("MENU")
+        print("=" * 45)
         print("1. Add a purchase")
         print("2. Buy multiple items")
-        print("3. Calculate discount")
-        print("4. Exit")
-        print("=" * 40)
+        print("3. Discount calculator")
+        print("4. View purchase history")
+        print("5. Reset budget (new week)")
+        print("6. Exit")
+        print("=" * 45)
 
-        choice = input("Choose (1-4): ")
+        choice = input("Choose option (1-6): ")
 
-        # ===== OPTION 1: Single Purchase =====
-        if choice == '1':
-            print("\n--- Add Purchase ---")
-            item_name = input("Item name: ")
-            item_price = float(input("Item price: $"))
+        # OPTION 1: Single Purchase
+        if choice == "1":
+            print("\n🛒 Add Purchase")
+            name = input("Item name: ").strip()
+            price = safe_float_input("Item price: $")
 
-            # Check if affordable using function
-            if can_buy(item_price, remaining):
-                confirm = input(f"Buy {item_name} for ${item_price:.2f}? (yes/no): ")
-
-                if confirm.lower() == 'yes':
-                    total_spent += item_price
-                    purchase_count += 1
-                    print(f"✓ Purchased {item_name}!")
-                else:
-                    print("Purchase cancelled.")
-            else:
-                shortage = item_price - remaining
-                print(f"❌ Can't afford! Need ${shortage:.2f} more.")
-
-        # ===== OPTION 2: Multiple Items =====
-        elif choice == '2':
-            print("\n--- Multiple Items ---")
-            print("Enter items (type 'done' to finish)")
-
-            item_count = 0
-            cart_total = 0.0
-
-            # WHILE LOOP with BREAK and CONTINUE
-            while True:
-                item = input(f"\nItem #{item_count + 1} name (or 'done'): ")
-
-                # BREAK - Exit loop
-                if item.lower() == 'done':
-                    break
-
-                # CONTINUE - Skip if empty
-                if item.strip() == "":
-                    print("Empty name! Try again.")
-                    continue
-
-                price = float(input(f"Price for {item}: $"))
-
-                # CONTINUE - Skip if invalid price
-                if price <= 0:
-                    print("Invalid price! Try again.")
-                    continue
-
-                cart_total += price
-                item_count += 1
-                print(f"✓ Added {item}")
-
-            # Check if any items added
-            if item_count == 0:
-                print("No items added.")
-            else:
-                print(f"\n📦 Cart: {item_count} items, Total: ${cart_total:.2f}")
-
-                # Boolean logic: AND and OR operators
-                affordable = cart_total <= remaining
-                reasonable = cart_total <= remaining * 0.7
-
-                if affordable and reasonable:
-                    print("✓ Safe to buy!")
-                elif affordable and not reasonable:
-                    print("⚠ You can afford it, but it's tight.")
-                else:
-                    print("❌ Can't afford this cart.")
-
-                # Ask to confirm
-                if affordable:
-                    confirm = input("Proceed with purchase? (yes/no): ")
-                    if confirm.lower() == 'yes':
-                        total_spent += cart_total
-                        purchase_count += item_count
-                        print("✓ Purchase complete!")
-
-        # ===== OPTION 3: Discount Calculator =====
-        elif choice == '3':
-            print("\n--- Discount Calculator ---")
-            original = float(input("Original price: $"))
-            discount = int(input("Discount %: "))
-
-            # Validate discount
-            if discount < 0 or discount > 100:
-                print("Invalid discount!")
+            if name == "":
+                print("❌ Item name cannot be empty.")
                 continue
 
-            final = calculate_discount(original, discount)
+            if can_buy(price, remaining):
+                confirm = input(f"Confirm purchase of {name} for ${price:.2f}? (yes/no): ").lower()
+                if confirm == "yes":
+                    add_purchase(data, name, price)
+                    save_data(data)
+                    print("✅ Purchase added successfully!")
+                else:
+                    print("❌ Purchase cancelled.")
+            else:
+                print(f"❌ Not affordable. Need ${price - remaining:.2f} more.")
 
-            # Check affordability
-            if can_buy(final, remaining):
-                print("✓ You can afford this!")
+        # OPTION 2: Multiple Items
+        elif choice == "2":
+            print("\n📦 Multiple Items Mode")
+            cart_total = 0.0
+            cart_items = []
+
+            while True:
+                item_name = input("Enter item name (or 'done'): ").strip()
+
+                if item_name.lower() == "done":
+                    break
+
+                if item_name == "":
+                    print("❌ Empty name not allowed.")
+                    continue
+
+                item_price = safe_float_input(f"Price for {item_name}: $")
+
+                if item_price <= 0:
+                    print("❌ Invalid price.")
+                    continue
+
+                cart_items.append((item_name, item_price))
+                cart_total += item_price
+                print(f"✅ Added {item_name} (${item_price:.2f})")
+
+            if len(cart_items) == 0:
+                print("❌ No items added.")
+                continue
+
+            print(f"\n🧾 Cart Total = ${cart_total:.2f}")
+
+            if cart_total <= remaining:
+                confirm = input("Proceed with all purchases? (yes/no): ").lower()
+                if confirm == "yes":
+                    for name, price in cart_items:
+                        add_purchase(data, name, price)
+                    save_data(data)
+                    print("✅ All items purchased successfully!")
+                else:
+                    print("❌ Cart cancelled.")
+            else:
+                print(f"❌ Can't afford cart. Need ${cart_total - remaining:.2f} more.")
+
+        # OPTION 3: Discount calculator
+        elif choice == "3":
+            print("\n💸 Discount Calculator")
+            price = safe_float_input("Original price: $")
+            discount = safe_int_input("Discount %: ")
+
+            if discount < 0 or discount > 100:
+                print("❌ Discount must be between 0 and 100.")
+                continue
+
+            final_price = calculate_discount(price, discount)
+
+            if can_buy(final_price, remaining):
+                print("✅ You can afford it after discount.")
             else:
                 print("❌ Still too expensive.")
 
-        # ===== OPTION 4: Exit =====
-        elif choice == '4':
-            keep_going = False  # This stops the while loop
-            print("\nExiting...")
+        # OPTION 4: History
+        elif choice == "4":
+            show_history(data)
 
-        # ===== Invalid Option =====
+        # OPTION 5: Reset budget
+        elif choice == "5":
+            confirm = input("Reset budget and purchases for new week? (yes/no): ").lower()
+            if confirm == "yes":
+                data = {"budget": safe_float_input("Enter new weekly budget: $"), "spent": 0.0, "purchases": []}
+                save_data(data)
+                print("✅ New week started successfully!")
+
+        # OPTION 6: Exit
+        elif choice == "6":
+            print("\n👋 Exiting Budget Tracker...")
+            break
+
         else:
-            print("❌ Invalid choice!")
+            print("❌ Invalid option. Choose between 1-6.")
 
-    # ========== FINAL SUMMARY ==========
-    print("\n" + "=" * 40)
-    print("FINAL SUMMARY")
-    print("=" * 40)
-    print(f"Budget: ${budget:.2f}")
-    print(f"Spent: ${total_spent:.2f}")
-    print(f"Remaining: ${budget - total_spent:.2f}")
-    print(f"Total Purchases: {purchase_count}")
-
-    # FOR LOOP - Show shopping behavior
-    print("\n📊 Shopping Behavior:")
-    levels = ["Saver 💎", "Moderate 👍", "Spender 💸"]
-
-    spent_percentage = (total_spent / budget) * 100
-
-    # Determine behavior level
-    if spent_percentage < 50:
-        level_index = 0
-    elif spent_percentage < 80:
-        level_index = 1
-    else:
-        level_index = 2
-
-    # FOR LOOP - Display with stars
-    for i in range(len(levels)):
-        if i == level_index:
-            print(f"  → {levels[i]} ⭐ (You are here!)")
-        else:
-            print(f"    {levels[i]}")
-
-    print("\n" + "=" * 40)
-    print("Thanks for using Budget Tracker! 👋")
+    # FINAL SUMMARY
+    print("\n" + "=" * 45)
+    print("FINAL SUMMARY REPORT")
+    print("=" * 45)
+    print(f"Budget:    ${data['budget']:.2f}")
+    print(f"Spent:     ${data['spent']:.2f}")
+    print(f"Remaining: ${data['budget'] - data['spent']:.2f}")
+    print(f"Purchases: {len(data['purchases'])}")
+    print("=" * 45)
 
 
-# ========== START PROGRAM ==========
 if __name__ == "__main__":
     main()
