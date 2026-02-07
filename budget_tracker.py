@@ -1,21 +1,23 @@
 """
 🚀 ULTRA SMART BUDGET TRACKER PRO MAX 💰
-=======================================
-Professional CLI Budget Tracker (Company Style Project)
+========================================
+Professional CLI Budget Tracker (Company-Level Style)
 
-Features:
+🔥 Features:
 ✅ Add purchase with unique ID
 ✅ Cart purchase system
-✅ Edit/Delete/Search purchase
-✅ Undo delete (rare feature)
-✅ Sort by price/date/category
-✅ Category summary + Spending chart
+✅ Discount calculator
+✅ Edit / Delete / Search purchase
+✅ Undo last delete (rare feature)
+✅ Sort purchases by price/date/category
+✅ Category summary + spending chart
 ✅ Daily spending report
+✅ Top 5 expensive purchases
 ✅ Analytics dashboard + prediction
-✅ Export CSV + JSON
-✅ Backup system
-✅ Reset week
-✅ Safe auto-save (prevents file corruption)
+✅ Export purchases to CSV + JSON
+✅ Backup system (timestamped backup)
+✅ Reset week system
+✅ Safe auto-save JSON (prevents corruption)
 
 Author: Upendra Reddy
 """
@@ -25,14 +27,16 @@ import os
 import csv
 import uuid
 from datetime import datetime
+from typing import Dict, List, Any
 
 
+# ================== CONSTANTS ==================
 DATA_FILE = "budget_data.json"
 EXPORT_CSV = "budget_export.csv"
 EXPORT_JSON = "budget_export.json"
 
 
-# ================= UI COLORS =================
+# ================== COLORS ==================
 class Colors:
     GREEN = "\033[92m"
     RED = "\033[91m"
@@ -43,20 +47,20 @@ class Colors:
     BOLD = "\033[1m"
 
 
-# ================= UTILITIES =================
-def divider():
-    print("=" * 95)
+# ================== UTILITIES ==================
+def divider(length: int = 95) -> None:
+    print("=" * length)
 
 
-def now_time():
+def now_time() -> str:
     return datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
 
-def parse_time(time_string):
+def parse_time(time_string: str) -> datetime:
     return datetime.strptime(time_string, "%d-%m-%Y %H:%M:%S")
 
 
-def safe_float_input(message):
+def safe_float_input(message: str) -> float:
     while True:
         try:
             value = float(input(message))
@@ -65,7 +69,7 @@ def safe_float_input(message):
             print(f"{Colors.RED}❌ Invalid input. Enter numbers only.{Colors.RESET}")
 
 
-def safe_int_input(message):
+def safe_int_input(message: str) -> int:
     while True:
         try:
             value = int(input(message))
@@ -74,7 +78,7 @@ def safe_int_input(message):
             print(f"{Colors.RED}❌ Invalid input. Enter integers only.{Colors.RESET}")
 
 
-def safe_non_empty(message):
+def safe_non_empty(message: str) -> str:
     while True:
         value = input(message).strip()
         if value:
@@ -82,20 +86,24 @@ def safe_non_empty(message):
         print(f"{Colors.RED}❌ Input cannot be empty.{Colors.RESET}")
 
 
-def calculate_total_spent(purchases):
+def calculate_total_spent(purchases: List[Dict[str, Any]]) -> float:
     return sum(item["price"] for item in purchases)
 
 
-# ================= SAFE FILE HANDLING =================
-def safe_write_json(filename, data):
-    """Company-level safe write (prevents corruption)"""
+# ================== SAFE FILE SYSTEM ==================
+def safe_write_json(filename: str, data: Dict[str, Any]) -> None:
+    """
+    Company-level safe write:
+    Writes to a temp file first, then replaces the real file.
+    Prevents file corruption during crashes.
+    """
     temp_file = filename + ".tmp"
     with open(temp_file, "w") as file:
         json.dump(data, file, indent=4)
     os.replace(temp_file, filename)
 
 
-def load_data():
+def load_data() -> Dict[str, Any]:
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r") as file:
@@ -109,17 +117,17 @@ def load_data():
             return data
 
         except json.JSONDecodeError:
-            print(f"{Colors.YELLOW}⚠ Data corrupted! Creating new file...{Colors.RESET}")
+            print(f"{Colors.YELLOW}⚠ Data corrupted! Creating fresh file...{Colors.RESET}")
 
     return {"budget": 0.0, "spent": 0.0, "purchases": [], "last_deleted": None}
 
 
-def save_data(data):
+def save_data(data: Dict[str, Any]) -> None:
     data["spent"] = calculate_total_spent(data["purchases"])
     safe_write_json(DATA_FILE, data)
 
 
-def backup_data():
+def backup_data() -> None:
     if not os.path.exists(DATA_FILE):
         print(f"{Colors.RED}❌ No data file found to backup.{Colors.RESET}")
         return
@@ -132,18 +140,18 @@ def backup_data():
     with open(backup_name, "w") as backup:
         backup.write(content)
 
-    print(f"{Colors.GREEN}✅ Backup created: {backup_name}{Colors.RESET}")
+    print(f"{Colors.GREEN}✅ Backup created successfully: {backup_name}{Colors.RESET}")
 
 
-# ================= DISPLAY =================
-def show_welcome():
+# ================== DISPLAY ==================
+def show_welcome() -> None:
     print(f"\n{Colors.CYAN}{Colors.BOLD}🚀 ULTRA SMART BUDGET TRACKER PRO MAX 💰{Colors.RESET}")
     divider()
-    print(f"{Colors.BLUE}Professional CLI Budget Management System (Real-World Project){Colors.RESET}")
+    print(f"{Colors.BLUE}Professional CLI Budget Management System (Company Style Project){Colors.RESET}")
     divider()
 
 
-def budget_status(data):
+def budget_status(data: Dict[str, Any]) -> float:
     budget = data["budget"]
     spent = data["spent"]
     remaining = budget - spent
@@ -151,46 +159,48 @@ def budget_status(data):
 
     print(f"\n{Colors.CYAN}{Colors.BOLD}📌 CURRENT STATUS DASHBOARD{Colors.RESET}")
     divider()
-    print(f"Weekly Budget     : ${budget:.2f}")
-    print(f"Total Spent       : ${spent:.2f}")
-    print(f"Remaining Money   : ${remaining:.2f}")
-    print(f"Usage Percentage  : {percent_used:.1f}%")
+    print(f"Weekly Budget       : ${budget:.2f}")
+    print(f"Total Spent         : ${spent:.2f}")
+    print(f"Remaining Money     : ${remaining:.2f}")
+    print(f"Usage Percentage    : {percent_used:.1f}%")
     divider()
 
     if percent_used < 50:
         print(f"{Colors.GREEN}Status: ✅ Excellent (Saver Mode){Colors.RESET}")
     elif percent_used < 80:
-        print(f"{Colors.YELLOW}Status: ⚠ Careful (Moderate Spending){Colors.RESET}")
+        print(f"{Colors.YELLOW}Status: ⚠ Moderate Spending{Colors.RESET}")
     elif percent_used <= 100:
-        print(f"{Colors.YELLOW}Status: 🚨 Warning! Budget Almost Finished!{Colors.RESET}")
+        print(f"{Colors.YELLOW}Status: 🚨 Warning! Budget Almost Finished{Colors.RESET}")
     else:
         print(f"{Colors.RED}Status: ❌ Over Budget!{Colors.RESET}")
 
     return remaining
 
 
-def show_history(data):
-    if not data["purchases"]:
-        print(f"{Colors.YELLOW}📭 No purchases yet.{Colors.RESET}")
+def show_history(data: Dict[str, Any]) -> None:
+    purchases = data["purchases"]
+
+    if not purchases:
+        print(f"{Colors.YELLOW}📭 No purchases found.{Colors.RESET}")
         return
 
     print(f"\n{Colors.CYAN}{Colors.BOLD}🧾 PURCHASE HISTORY{Colors.RESET}")
     divider()
 
-    for i, item in enumerate(data["purchases"], start=1):
+    for i, item in enumerate(purchases, start=1):
         print(f"{Colors.BOLD}{i}. {item['name']}{Colors.RESET} | {item['category']} | ${item['price']:.2f}")
         print(f"   ID: {item['id']} | 🕒 {item['time']}")
 
     divider()
-    print(f"{Colors.BLUE}Total Purchases: {len(data['purchases'])}{Colors.RESET}")
+    print(f"{Colors.BLUE}Total Purchases: {len(purchases)}{Colors.RESET}")
 
 
-# ================= PURCHASE MANAGEMENT =================
-def can_buy(price, remaining):
+# ================== PURCHASE MANAGEMENT ==================
+def can_buy(price: float, remaining: float) -> bool:
     return price > 0 and price <= remaining
 
 
-def add_purchase(data, name, category, price):
+def add_purchase(data: Dict[str, Any], name: str, category: str, price: float) -> None:
     data["purchases"].append({
         "id": str(uuid.uuid4())[:8],
         "name": name,
@@ -201,7 +211,59 @@ def add_purchase(data, name, category, price):
     save_data(data)
 
 
-def delete_purchase(data):
+def cart_purchase(data: Dict[str, Any], remaining: float) -> None:
+    print(f"\n{Colors.CYAN}{Colors.BOLD}📦 CART PURCHASE MODE{Colors.RESET}")
+    divider()
+
+    cart_items = []
+    cart_total = 0.0
+
+    while True:
+        item_name = input("Item name (or 'done'): ").strip()
+
+        if item_name.lower() == "done":
+            break
+
+        if not item_name:
+            print(f"{Colors.RED}❌ Empty name not allowed.{Colors.RESET}")
+            continue
+
+        category = safe_non_empty("Category: ")
+        price = safe_float_input("Price: $")
+
+        if price <= 0:
+            print(f"{Colors.RED}❌ Price must be greater than 0.{Colors.RESET}")
+            continue
+
+        cart_items.append((item_name, category, price))
+        cart_total += price
+
+        print(f"{Colors.GREEN}✅ Added: {item_name} (${price:.2f}){Colors.RESET}")
+
+    if not cart_items:
+        print(f"{Colors.YELLOW}❌ No items added to cart.{Colors.RESET}")
+        return
+
+    divider()
+    print(f"{Colors.BOLD}🧾 Cart Total: ${cart_total:.2f}{Colors.RESET}")
+    divider()
+
+    if cart_total > remaining:
+        print(f"{Colors.RED}❌ Can't afford cart. Need ${cart_total - remaining:.2f} more.{Colors.RESET}")
+        return
+
+    confirm = input("Confirm cart purchase? (yes/no): ").lower().strip()
+    if confirm != "yes":
+        print(f"{Colors.YELLOW}❌ Cart cancelled.{Colors.RESET}")
+        return
+
+    for name, cat, price in cart_items:
+        add_purchase(data, name, cat, price)
+
+    print(f"{Colors.GREEN}✅ Cart purchased successfully!{Colors.RESET}")
+
+
+def delete_purchase(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases to delete.{Colors.RESET}")
         return
@@ -221,20 +283,20 @@ def delete_purchase(data):
     print(f"{Colors.YELLOW}💡 Tip: Use UNDO option to restore last deleted item.{Colors.RESET}")
 
 
-def undo_delete(data):
+def undo_delete(data: Dict[str, Any]) -> None:
     if data.get("last_deleted") is None:
         print(f"{Colors.RED}❌ Nothing to undo.{Colors.RESET}")
         return
 
-    data["purchases"].append(data["last_deleted"])
     restored = data["last_deleted"]
+    data["purchases"].append(restored)
     data["last_deleted"] = None
-    save_data(data)
 
+    save_data(data)
     print(f"{Colors.GREEN}✅ Undo successful! Restored: {restored['name']} (${restored['price']:.2f}){Colors.RESET}")
 
 
-def edit_purchase(data):
+def edit_purchase(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases to edit.{Colors.RESET}")
         return
@@ -248,7 +310,7 @@ def edit_purchase(data):
 
     item = data["purchases"][index - 1]
 
-    print(f"\n{Colors.CYAN}{Colors.BOLD}✏ EDIT MODE{Colors.RESET}")
+    print(f"\n{Colors.CYAN}{Colors.BOLD}✏ EDIT PURCHASE MODE{Colors.RESET}")
     divider()
     print(f"Name     : {item['name']}")
     print(f"Category : {item['category']}")
@@ -256,9 +318,9 @@ def edit_purchase(data):
     print(f"Time     : {item['time']}")
     divider()
 
-    new_name = input("New name (Enter keep same): ").strip()
-    new_category = input("New category (Enter keep same): ").strip()
-    new_price_input = input("New price (Enter keep same): ").strip()
+    new_name = input("New name (Enter to keep same): ").strip()
+    new_category = input("New category (Enter to keep same): ").strip()
+    new_price_input = input("New price (Enter to keep same): ").strip()
 
     if new_name:
         item["name"] = new_name
@@ -281,20 +343,22 @@ def edit_purchase(data):
     print(f"{Colors.GREEN}✅ Purchase updated successfully!{Colors.RESET}")
 
 
-def search_purchase(data):
+def search_purchase(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases available.{Colors.RESET}")
         return
 
-    keyword = safe_non_empty("\nEnter keyword (name/category): ").lower()
+    keyword = safe_non_empty("\nEnter keyword (name/category/id): ").lower()
 
     print(f"\n{Colors.CYAN}{Colors.BOLD}🔍 SEARCH RESULTS{Colors.RESET}")
     divider()
 
     found = False
     for item in data["purchases"]:
-        if keyword in item["name"].lower() or keyword in item["category"].lower():
-            print(f"{item['name']} | {item['category']} | ${item['price']:.2f}")
+        if (keyword in item["name"].lower()
+                or keyword in item["category"].lower()
+                or keyword in item["id"].lower()):
+            print(f"{Colors.BOLD}{item['name']}{Colors.RESET} | {item['category']} | ${item['price']:.2f}")
             print(f"ID: {item['id']} | 🕒 {item['time']}")
             divider()
             found = True
@@ -303,17 +367,19 @@ def search_purchase(data):
         print(f"{Colors.RED}❌ No matching results found.{Colors.RESET}")
 
 
-def sort_purchases(data):
+def sort_purchases(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases to sort.{Colors.RESET}")
         return
 
     print(f"\n{Colors.CYAN}{Colors.BOLD}🔃 SORT OPTIONS{Colors.RESET}")
+    divider()
     print("1. Price (High to Low)")
     print("2. Price (Low to High)")
     print("3. Date (Newest First)")
     print("4. Date (Oldest First)")
     print("5. Category (A-Z)")
+    divider()
 
     choice = input("Choose (1-5): ").strip()
 
@@ -335,8 +401,30 @@ def sort_purchases(data):
     print(f"{Colors.GREEN}✅ Purchases sorted successfully!{Colors.RESET}")
 
 
-# ================= REPORT FUNCTIONS =================
-def category_summary(data):
+# ================== DISCOUNT ==================
+def discount_calculator() -> None:
+    print(f"\n{Colors.CYAN}{Colors.BOLD}💸 DISCOUNT CALCULATOR{Colors.RESET}")
+    divider()
+
+    price = safe_float_input("Original price: $")
+    discount = safe_int_input("Discount %: ")
+
+    if discount < 0 or discount > 100:
+        print(f"{Colors.RED}❌ Discount must be between 0 and 100.{Colors.RESET}")
+        return
+
+    discount_amount = price * (discount / 100)
+    final_price = price - discount_amount
+
+    divider()
+    print(f"Original Price : ${price:.2f}")
+    print(f"Discount       : {discount}% (-${discount_amount:.2f})")
+    print(f"Final Price    : ${final_price:.2f}")
+    divider()
+
+
+# ================== REPORTS ==================
+def category_summary(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases available.{Colors.RESET}")
         return
@@ -345,7 +433,7 @@ def category_summary(data):
     for item in data["purchases"]:
         summary[item["category"]] = summary.get(item["category"], 0) + item["price"]
 
-    print(f"\n{Colors.CYAN}{Colors.BOLD}📊 CATEGORY SUMMARY{Colors.RESET}")
+    print(f"\n{Colors.CYAN}{Colors.BOLD}📊 CATEGORY SUMMARY REPORT{Colors.RESET}")
     divider()
 
     for cat, total in summary.items():
@@ -354,7 +442,7 @@ def category_summary(data):
     divider()
 
 
-def spending_chart(data):
+def spending_chart(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases available.{Colors.RESET}")
         return
@@ -376,7 +464,7 @@ def spending_chart(data):
     divider()
 
 
-def daily_report(data):
+def daily_report(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases available.{Colors.RESET}")
         return
@@ -395,14 +483,14 @@ def daily_report(data):
     divider()
 
 
-def top_expensive(data):
+def top_5_expensive(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases available.{Colors.RESET}")
         return
 
     sorted_items = sorted(data["purchases"], key=lambda x: x["price"], reverse=True)
 
-    print(f"\n{Colors.CYAN}{Colors.BOLD}🔥 TOP 5 EXPENSIVE PURCHASES{Colors.RESET}")
+    print(f"\n{Colors.CYAN}{Colors.BOLD}🔥 TOP 5 MOST EXPENSIVE PURCHASES{Colors.RESET}")
     divider()
 
     for i, item in enumerate(sorted_items[:5], start=1):
@@ -411,7 +499,7 @@ def top_expensive(data):
     divider()
 
 
-def analytics_dashboard(data):
+def analytics_dashboard(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases available.{Colors.RESET}")
         return
@@ -420,7 +508,6 @@ def analytics_dashboard(data):
     budget = data["budget"]
     remaining = budget - total_spent
     total_items = len(data["purchases"])
-
     avg_spent = total_spent / total_items if total_items else 0
 
     summary = {}
@@ -449,13 +536,13 @@ def analytics_dashboard(data):
         prediction = int(remaining / avg_spent)
         print(f"📌 Prediction: You can buy approx {prediction} more items.")
     else:
-        print("📌 Prediction: Not enough data.")
+        print("📌 Prediction: Not enough data for prediction.")
 
     divider()
 
 
-# ================= EXPORT FUNCTIONS =================
-def export_to_csv(data):
+# ================== EXPORT ==================
+def export_to_csv(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases to export.{Colors.RESET}")
         return
@@ -467,10 +554,10 @@ def export_to_csv(data):
         for i, item in enumerate(data["purchases"], start=1):
             writer.writerow([i, item["id"], item["name"], item["category"], item["price"], item["time"]])
 
-    print(f"{Colors.GREEN}✅ Exported to CSV: {EXPORT_CSV}{Colors.RESET}")
+    print(f"{Colors.GREEN}✅ Exported successfully to CSV: {EXPORT_CSV}{Colors.RESET}")
 
 
-def export_to_json(data):
+def export_to_json(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases to export.{Colors.RESET}")
         return
@@ -478,20 +565,43 @@ def export_to_json(data):
     with open(EXPORT_JSON, "w") as file:
         json.dump(data["purchases"], file, indent=4)
 
-    print(f"{Colors.GREEN}✅ Exported to JSON: {EXPORT_JSON}{Colors.RESET}")
+    print(f"{Colors.GREEN}✅ Exported successfully to JSON: {EXPORT_JSON}{Colors.RESET}")
 
 
-# ================= MAIN PROGRAM =================
-def main():
+# ================== RESET SYSTEM ==================
+def reset_week(data: Dict[str, Any]) -> Dict[str, Any]:
+    confirm = input("Reset purchases and start new week? (yes/no): ").lower().strip()
+
+    if confirm != "yes":
+        print(f"{Colors.YELLOW}❌ Reset cancelled.{Colors.RESET}")
+        return data
+
+    new_budget = safe_float_input("Enter new weekly budget: $")
+
+    if new_budget <= 0:
+        print(f"{Colors.RED}❌ Budget must be greater than 0.{Colors.RESET}")
+        return data
+
+    data = {"budget": new_budget, "spent": 0.0, "purchases": [], "last_deleted": None}
+    save_data(data)
+
+    print(f"{Colors.GREEN}✅ New week started successfully!{Colors.RESET}")
+    return data
+
+
+# ================== MAIN PROGRAM ==================
+def main() -> None:
     show_welcome()
     data = load_data()
 
     if data["budget"] <= 0:
         print(f"{Colors.YELLOW}⚡ First time setup{Colors.RESET}")
         budget = safe_float_input("Enter your weekly budget: $")
+
         if budget <= 0:
             print(f"{Colors.RED}❌ Budget must be greater than 0.{Colors.RESET}")
             return
+
         data["budget"] = budget
         save_data(data)
 
@@ -502,25 +612,26 @@ def main():
         divider()
         print("1. Add purchase")
         print("2. Cart purchases")
-        print("3. View history")
-        print("4. Search purchase")
-        print("5. Edit purchase")
-        print("6. Delete purchase")
-        print("7. Undo delete ⭐")
-        print("8. Sort purchases")
-        print("9. Category summary")
-        print("10. Spending chart")
-        print("11. Daily report")
-        print("12. Top 5 expensive purchases")
-        print("13. Analytics dashboard ⭐")
-        print("14. Export CSV")
-        print("15. Export JSON")
-        print("16. Backup data")
-        print("17. Reset week")
-        print("18. Exit")
+        print("3. Discount calculator")
+        print("4. View history")
+        print("5. Search purchase")
+        print("6. Edit purchase")
+        print("7. Delete purchase")
+        print("8. Undo delete ⭐")
+        print("9. Sort purchases")
+        print("10. Category summary")
+        print("11. Spending chart")
+        print("12. Daily report")
+        print("13. Top 5 expensive purchases")
+        print("14. Analytics dashboard ⭐")
+        print("15. Export CSV")
+        print("16. Export JSON")
+        print("17. Backup data")
+        print("18. Reset week")
+        print("19. Exit")
         divider()
 
-        choice = input("Choose option (1-18): ").strip()
+        choice = input("Choose option (1-19): ").strip()
 
         if choice == "1":
             name = safe_non_empty("Item name: ")
@@ -534,105 +645,62 @@ def main():
                 print(f"{Colors.RED}❌ Not affordable. Need ${price - remaining:.2f} more.{Colors.RESET}")
 
         elif choice == "2":
-            print(f"\n{Colors.CYAN}{Colors.BOLD}📦 CART PURCHASE MODE{Colors.RESET}")
-            cart_items = []
-            cart_total = 0
-
-            while True:
-                item_name = input("Item name (or 'done'): ").strip()
-                if item_name.lower() == "done":
-                    break
-                if not item_name:
-                    print("❌ Empty item name not allowed.")
-                    continue
-
-                category = safe_non_empty("Category: ")
-                price = safe_float_input("Price: $")
-
-                if price <= 0:
-                    print("❌ Invalid price.")
-                    continue
-
-                cart_items.append((item_name, category, price))
-                cart_total += price
-                print(f"✅ Added {item_name} (${price:.2f})")
-
-            if not cart_items:
-                print("❌ No items added.")
-                continue
-
-            print(f"\n🧾 Cart Total = ${cart_total:.2f}")
-
-            if cart_total <= remaining:
-                confirm = input("Confirm cart purchase? (yes/no): ").lower()
-                if confirm == "yes":
-                    for name, cat, price in cart_items:
-                        add_purchase(data, name, cat, price)
-                    print(f"{Colors.GREEN}✅ Cart purchased successfully!{Colors.RESET}")
-                else:
-                    print("❌ Cart cancelled.")
-            else:
-                print(f"{Colors.RED}❌ Can't afford cart. Need ${cart_total - remaining:.2f} more.{Colors.RESET}")
+            cart_purchase(data, remaining)
 
         elif choice == "3":
-            show_history(data)
+            discount_calculator()
 
         elif choice == "4":
-            search_purchase(data)
+            show_history(data)
 
         elif choice == "5":
-            edit_purchase(data)
+            search_purchase(data)
 
         elif choice == "6":
-            delete_purchase(data)
+            edit_purchase(data)
 
         elif choice == "7":
-            undo_delete(data)
+            delete_purchase(data)
 
         elif choice == "8":
-            sort_purchases(data)
+            undo_delete(data)
 
         elif choice == "9":
-            category_summary(data)
+            sort_purchases(data)
 
         elif choice == "10":
-            spending_chart(data)
+            category_summary(data)
 
         elif choice == "11":
-            daily_report(data)
+            spending_chart(data)
 
         elif choice == "12":
-            top_expensive(data)
+            daily_report(data)
 
         elif choice == "13":
-            analytics_dashboard(data)
+            top_5_expensive(data)
 
         elif choice == "14":
-            export_to_csv(data)
+            analytics_dashboard(data)
 
         elif choice == "15":
-            export_to_json(data)
+            export_to_csv(data)
 
         elif choice == "16":
-            backup_data()
+            export_to_json(data)
 
         elif choice == "17":
-            confirm = input("Reset purchases and start new week? (yes/no): ").lower()
-            if confirm == "yes":
-                new_budget = safe_float_input("Enter new weekly budget: $")
-                if new_budget <= 0:
-                    print(f"{Colors.RED}❌ Budget must be greater than 0.{Colors.RESET}")
-                    continue
-                data = {"budget": new_budget, "spent": 0.0, "purchases": [], "last_deleted": None}
-                save_data(data)
-                print(f"{Colors.GREEN}✅ New week started!{Colors.RESET}")
+            backup_data()
 
         elif choice == "18":
+            data = reset_week(data)
+
+        elif choice == "19":
             print(f"\n{Colors.GREEN}👋 Exiting Budget Tracker...{Colors.RESET}")
             break
 
         else:
-            print(f"{Colors.RED}❌ Invalid option.{Colors.RESET}")
+            print(f"{Colors.RED}❌ Invalid option. Choose between 1-19.{Colors.RESET}")
 
     divider()
     print(f"{Colors.CYAN}{Colors.BOLD}FINAL SUMMARY REPORT{Colors.RESET}")
