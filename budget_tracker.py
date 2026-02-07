@@ -1,25 +1,28 @@
 """
-🚀 ULTRA SMART BUDGET TRACKER PRO MAX 💰
-========================================
-Professional CLI Budget Tracker (Company-Level Style)
+🚀 ULTRA SMART BUDGET TRACKER PRO MAX 💰 (2026 Edition)
+======================================================
 
-🔥 Features:
+Professional CLI Budget Tracker (Company-Level Project)
+
+Features:
 ✅ Add purchase with unique ID
 ✅ Cart purchase system
-✅ Discount calculator
-✅ Edit / Delete / Search purchase
+✅ Edit/Delete/Search purchase (by name/category/id)
 ✅ Undo last delete (rare feature)
-✅ Sort purchases by price/date/category
-✅ Category summary + spending chart
+✅ Sort purchases (price/date/category)
+✅ Category summary report
+✅ Spending bar chart
 ✅ Daily spending report
-✅ Top 5 expensive purchases
-✅ Analytics dashboard + prediction
+✅ Analytics dashboard (prediction + insights)
+✅ Discount calculator
 ✅ Export purchases to CSV + JSON
 ✅ Backup system (timestamped backup)
 ✅ Reset week system
 ✅ Safe auto-save JSON (prevents corruption)
+✅ Data consistency auto-fix (spent recalculated automatically)
 
 Author: Upendra Reddy
+Year: 2026
 """
 
 import json
@@ -113,6 +116,7 @@ def load_data() -> Dict[str, Any]:
             data.setdefault("purchases", [])
             data.setdefault("last_deleted", None)
 
+            # auto-fix spent
             data["spent"] = calculate_total_spent(data["purchases"])
             return data
 
@@ -145,9 +149,9 @@ def backup_data() -> None:
 
 # ================== DISPLAY ==================
 def show_welcome() -> None:
-    print(f"\n{Colors.CYAN}{Colors.BOLD}🚀 ULTRA SMART BUDGET TRACKER PRO MAX 💰{Colors.RESET}")
+    print(f"\n{Colors.CYAN}{Colors.BOLD}🚀 ULTRA SMART BUDGET TRACKER PRO MAX 💰 (2026 Edition){Colors.RESET}")
     divider()
-    print(f"{Colors.BLUE}Professional CLI Budget Management System (Company Style Project){Colors.RESET}")
+    print(f"{Colors.BLUE}Professional CLI Budget Management System (Company-Level Project){Colors.RESET}")
     divider()
 
 
@@ -401,28 +405,6 @@ def sort_purchases(data: Dict[str, Any]) -> None:
     print(f"{Colors.GREEN}✅ Purchases sorted successfully!{Colors.RESET}")
 
 
-# ================== DISCOUNT ==================
-def discount_calculator() -> None:
-    print(f"\n{Colors.CYAN}{Colors.BOLD}💸 DISCOUNT CALCULATOR{Colors.RESET}")
-    divider()
-
-    price = safe_float_input("Original price: $")
-    discount = safe_int_input("Discount %: ")
-
-    if discount < 0 or discount > 100:
-        print(f"{Colors.RED}❌ Discount must be between 0 and 100.{Colors.RESET}")
-        return
-
-    discount_amount = price * (discount / 100)
-    final_price = price - discount_amount
-
-    divider()
-    print(f"Original Price : ${price:.2f}")
-    print(f"Discount       : {discount}% (-${discount_amount:.2f})")
-    print(f"Final Price    : ${final_price:.2f}")
-    divider()
-
-
 # ================== REPORTS ==================
 def category_summary(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
@@ -483,14 +465,14 @@ def daily_report(data: Dict[str, Any]) -> None:
     divider()
 
 
-def top_5_expensive(data: Dict[str, Any]) -> None:
+def top_expensive(data: Dict[str, Any]) -> None:
     if not data["purchases"]:
         print(f"{Colors.YELLOW}📭 No purchases available.{Colors.RESET}")
         return
 
     sorted_items = sorted(data["purchases"], key=lambda x: x["price"], reverse=True)
 
-    print(f"\n{Colors.CYAN}{Colors.BOLD}🔥 TOP 5 MOST EXPENSIVE PURCHASES{Colors.RESET}")
+    print(f"\n{Colors.CYAN}{Colors.BOLD}🔥 TOP 5 EXPENSIVE PURCHASES{Colors.RESET}")
     divider()
 
     for i, item in enumerate(sorted_items[:5], start=1):
@@ -536,8 +518,30 @@ def analytics_dashboard(data: Dict[str, Any]) -> None:
         prediction = int(remaining / avg_spent)
         print(f"📌 Prediction: You can buy approx {prediction} more items.")
     else:
-        print("📌 Prediction: Not enough data for prediction.")
+        print("📌 Prediction: Not enough data.")
 
+    divider()
+
+
+# ================== DISCOUNT CALCULATOR ==================
+def discount_calculator() -> None:
+    print(f"\n{Colors.CYAN}{Colors.BOLD}💸 DISCOUNT CALCULATOR{Colors.RESET}")
+    divider()
+
+    price = safe_float_input("Enter original price: $")
+    discount = safe_int_input("Enter discount percentage: ")
+
+    if discount < 0 or discount > 100:
+        print(f"{Colors.RED}❌ Discount must be between 0 and 100.{Colors.RESET}")
+        return
+
+    discount_amount = price * (discount / 100)
+    final_price = price - discount_amount
+
+    divider()
+    print(f"Original Price : ${price:.2f}")
+    print(f"Discount       : {discount}% (-${discount_amount:.2f})")
+    print(f"Final Price    : ${final_price:.2f}")
     divider()
 
 
@@ -678,7 +682,7 @@ def main() -> None:
             daily_report(data)
 
         elif choice == "13":
-            top_5_expensive(data)
+            top_expensive(data)
 
         elif choice == "14":
             analytics_dashboard(data)
