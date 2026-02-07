@@ -88,7 +88,7 @@ def calculate_total_spent(purchases):
 
 # ================= SAFE FILE HANDLING =================
 def safe_write_json(filename, data):
-    """Writes JSON safely to prevent corruption (company-level method)."""
+    """Company-level safe write (prevents corruption)"""
     temp_file = filename + ".tmp"
     with open(temp_file, "w") as file:
         json.dump(data, file, indent=4)
@@ -139,7 +139,7 @@ def backup_data():
 def show_welcome():
     print(f"\n{Colors.CYAN}{Colors.BOLD}🚀 ULTRA SMART BUDGET TRACKER PRO MAX 💰{Colors.RESET}")
     divider()
-    print(f"{Colors.BLUE}Professional CLI Budget Management System (Final Year Project){Colors.RESET}")
+    print(f"{Colors.BLUE}Professional CLI Budget Management System (Real-World Project){Colors.RESET}")
     divider()
 
 

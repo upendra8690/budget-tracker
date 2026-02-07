@@ -1,6 +1,7 @@
-budget_data.json
-budget_export.csv
-budget_export.json
-backup_*.json
 __pycache__/
 *.pyc
+*.tmp
+budget_data.json
+backup_*.json
+budget_export.csv
+budget_export.json
